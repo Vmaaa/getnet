@@ -19,7 +19,7 @@ class FakeClassifier:
         self.outcome = outcome
         self.prompts = []
 
-    def with_structured_output(self, schema):
+    def with_structured_output(self, schema, method="json_schema"):
         assert schema.__name__ == "IntentDecision"
         return FakeStructured(self.outcome)
 
@@ -78,7 +78,7 @@ def test_replan_injects_gap_and_registers():
             return IntentDecision(intent="support", reasoning="ok")
 
     class CaptureClassifier:
-        def with_structured_output(self, schema):
+        def with_structured_output(self, schema, method="json_schema"):
             assert schema.__name__ == "IntentDecision"
             return CaptureStructured()
 

@@ -20,7 +20,7 @@ class FakeChatModel:
         self.decision = decision
         self.prompts = []
 
-    def with_structured_output(self, schema):
+    def with_structured_output(self, schema, method="json_schema"):
         assert schema is KnowledgeDecision
         return FakeStructured(self.decision)
 
