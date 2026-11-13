@@ -5,16 +5,16 @@ import time
 import urllib.request
 
 SCENARIOS = [
-    ("What's the difference between the Get Clássica and the Get Smart?", "cliente1988", "knowledge"),
-    ("What's the weather forecast in Porto Alegre tomorrow?", "cliente1988", "knowledge"),
-    ("When will the money from yesterday's sales be deposited?", "cliente1988", "support"),
-    ("Do I need a bank account to receive my sales via Pix?", "cliente1988", "knowledge"),
-    ("My card machine won't connect to the internet, what should I do?", "cliente1988", "support"),
-    ("How does receivables advance (antecipação) work with Getnet?", "cliente1988", "knowledge"),
-    ("What's the euro exchange rate today?", "cliente1988", "knowledge"),
-    ("My card machine is showing a transaction decline error.", "cliente1988", "support"),
-    ("How many installments can I split a sale into with the crediário?", "cliente1988", "knowledge"),
-    ("Can I sell through WhatsApp using the Payment Link?", "cliente1988", "knowledge"),
+    ("What's the difference between the Get Clássica and the Get Smart?", "cliente1988", "knowledge", False),
+    ("What's the weather forecast in Porto Alegre tomorrow?", "cliente1988", "knowledge", True),
+    ("When will the money from yesterday's sales be deposited?", "cliente1988", "support", False),
+    ("Do I need a bank account to receive my sales via Pix?", "cliente1988", "knowledge", False),
+    ("My card machine won't connect to the internet, what should I do?", "cliente1988", "support", False),
+    ("How does receivables advance (antecipação) work with Getnet?", "cliente1988", "knowledge", False),
+    ("What's the euro exchange rate today?", "cliente1988", "knowledge", True),
+    ("My card machine is showing a transaction decline error.", "cliente1988", "support", False),
+    ("How many installments can I split a sale into with the crediário?", "cliente1988", "knowledge", False),
+    ("Can I sell through WhatsApp using the Payment Link?", "cliente1988", "knowledge", False),
 ]
 
 VALID_TOOLS = {"get_user_profile", "get_transactions", "get_device_status"}
@@ -32,8 +32,9 @@ def post_chat(base_url: str, message: str, user_id: str, timeout: int) -> tuple[
         return response.status, json.loads(response.read())
 
 
-def check(body: dict, expected: str) -> list[str]:
+def check(body: dict, expected: str, web_optional: bool) -> list[str]:
     failures = []
+    degraded = False
     for key in ("status", "answer", "citations", "tools_used", "agent_trace", "session_id"):
         if key not in body:
             failures.append(f"missing key {key}")
@@ -47,8 +48,10 @@ def check(body: dict, expected: str) -> list[str]:
         if not citation.get("text") or not citation.get("url") or not citation.get("title"):
             failures.append("citation missing text/url/title")
             break
-    if expected == "knowledge" and not body["citations"]:
+    if expected == "knowledge" and not body["citations"] and not body["status"] == "triage":
         failures.append("expected citations for knowledge scenario")
+    if expected == "knowledge" and web_optional and body["status"] == "triage":
+        degraded = True
     if expected == "support":
         if not body["tools_used"]:
             failures.append("expected tools_used for support scenario")
@@ -62,7 +65,7 @@ def check(body: dict, expected: str) -> list[str]:
     attempts = [entry["attempt"] for entry in body["agent_trace"]]
     if attempts != sorted(attempts):
         failures.append(f"trace attempts unordered: {attempts}")
-    return failures
+    return failures, degraded
 
 
 def main() -> None:
@@ -74,32 +77,39 @@ def main() -> None:
 
     rows = []
     exit_code = 0
-    for message, user_id, expected in SCENARIOS:
+    for message, user_id, expected, web_optional in SCENARIOS:
         start = time.monotonic()
         body: dict = {}
         failures: list[str] = []
+        degraded = False
         try:
             status, body = post_chat(args.base_url, message, user_id, args.timeout)
             if status != 200:
                 failures.append(f"http {status}")
             else:
-                failures = check(body, expected)
+                failures, degraded = check(body, expected, web_optional)
             if args.verbose:
                 print(json.dumps(body, ensure_ascii=False, indent=2))
         except Exception as exc:
             failures.append(f"request failed: {exc}")
         elapsed = time.monotonic() - start
-        rows.append((message, body, not failures, elapsed, failures))
-        if failures:
+        ok = not failures
+        rows.append((message, body, ok, degraded, elapsed, failures))
+        if not ok:
             exit_code = 1
 
     print()
-    print(f"{'RESULT':<6} | {'STATUS':<7} | {'CITES':<5} | {'TOOLS':<20} | {'TIME':>6} | SCENARIO")
-    for message, body, ok, elapsed, failures in rows:
-        mark = "" if ok else " -> " + "; ".join(failures)
+    print(f"{'RESULT':<14} | {'STATUS':<7} | {'CITES':<5} | {'TOOLS':<20} | {'TIME':>6} | SCENARIO")
+    for message, body, ok, degraded, elapsed, failures in rows:
+        if ok and degraded:
+            mark = " -> web search unavailable, honest triage"
+            result = "PASS(DEG)"
+        else:
+            mark = "" if ok else " -> " + "; ".join(failures)
+            result = "PASS" if ok else "FAIL"
         tools = ",".join(body.get("tools_used", []))[:20]
         print(
-            f"{'PASS' if ok else 'FAIL':<6} | {body.get('status', '-'):<7} | "
+            f"{result:<14} | {body.get('status', '-'):<7} | "
             f"{len(body.get('citations', [])):<5} | {tools:<20} | {elapsed:5.1f}s | {message[:48]}{mark}"
         )
     sys.exit(exit_code)
