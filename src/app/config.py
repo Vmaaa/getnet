@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     chat_model: str = "gpt-4o-mini"
     llm_provider: str = "openai"
 
-    rag_top_k: int = 5
+    rag_top_k: int = 12
     rag_min_score: float = 0.3
     embedding_model: str = "codefuse-ai/F2LLM-v2-0.6B"
     embedding_batch_size: int = 8

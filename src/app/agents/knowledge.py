@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Literal
 
 from pydantic import BaseModel
@@ -60,6 +61,7 @@ def web_results(message: str) -> list[Passage]:
             results = DDGS().text(query, region=region, max_results=5)
         except Exception as exc:
             logger.warning("web search failed query=%r error=%s", query[:60], exc)
+            time.sleep(2)
             continue
         passages = [
             Passage(text=r["body"], url=r["href"], title=r["title"], score=0.5)
