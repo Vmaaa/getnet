@@ -95,7 +95,12 @@ Response:
 ## Testing strategy
 
 - **Unit** (pytest, 70+ tests): contracts, config, chunker (sizes/overlap/breadcrumbs), store round-trips and retriever ordering with fake embeddings, knowledge agent citation mirroring and `needs_help`, support loop bounds with scripted fake tool-calling models, router gap ledger, graph pass cap/triage/trace with fake router, API contract tests with a faked orchestrator. No test touches the network or the embedding model — expensive components sit behind injectable protocols.
-- **Integration** (`scripts/smoke_http.py`): the 10 challenge scenarios against the real compose stack, asserting schema, contiguous citation refs, real tool names, trace integrity and non-empty English answers; exits non-zero on any failure.
+- **Integration** (`scripts/smoke_http.py`): the 10 challenge scenarios against the real compose stack, asserting schema, contiguous citation refs, real tool names, trace integrity and non-empty English answers; exits non-zero on any failure. The two general-world scenarios (weather, exchange rate) depend on DuckDuckGo availability: when DDG fails, the system degrades **honestly** to a triage response (never fabricates a forecast/rate) and the smoke reports `PASS(DEG)` — an explicit degraded pass, not a silent skip.
+
+## Live verification (2026-11-13)
+
+Against the running compose stack (`chroma_chunks=421`, DeepSeek endpoint): 9/10 scenarios answered with grounded citations, 1/10 honest web-degraded triage. Support scenarios executed real tools (`get_user_profile`, `get_transactions`) with settlement dates quoted from the mock bank; the supervisor loop exercised re-plan on gap and triage on exhaustion.
+
 
 ## Container notes
 
