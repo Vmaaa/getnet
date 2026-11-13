@@ -9,3 +9,6 @@ chroma/
 *.egg-info/
 dist/
 build/
+data/
+.env
+ingest.log
