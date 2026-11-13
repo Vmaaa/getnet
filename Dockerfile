@@ -8,7 +8,7 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
+COPY README.md pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 COPY src ./src
