@@ -1,0 +1,42 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = "Getnet multi-agent support system: LangGraph supervisor + RAG knowledge + support agents"
+readme = "README.md"
+authors = [
+    { name = "Vmaaa", email = "vma.iantonio@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "beautifulsoup4==4.15.0",
+    "chromadb==1.5.9",
+    "ddgs==9.16.1",
+    "fastapi==0.162.7",
+    "html2text==2025.4.15",
+    "httpx==0.28.1",
+    "langchain==1.5.0",
+    "langchain-openai==1.8.0",
+    "langgraph==1.2.21",
+    "pydantic==2.14.3",
+    "pydantic-settings==2.16.3",
+    "sentence-transformers==6.3.0",
+    "torch==2.15.0",
+    "uvicorn==0.54.0",
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+]
