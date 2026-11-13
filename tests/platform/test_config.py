@@ -5,7 +5,7 @@ def test_settings_defaults():
     s = Settings(_env_file=None)
     assert s.chat_model == "gpt-4o-mini"
     assert s.llm_provider == "openai"
-    assert s.rag_top_k == 8
+    assert s.rag_top_k == 12
     assert s.rag_min_score == 0.3
     assert s.embedding_model == "codefuse-ai/F2LLM-v2-0.6B"
     assert s.chroma_dir == "data/chroma"

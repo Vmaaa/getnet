@@ -34,7 +34,7 @@ def get_chat_model() -> BaseChatModel:
 
 def structured_output(model: BaseChatModel, schema, messages: list[AnyMessage] | list[dict]):
     last_error: Exception | None = None
-    for method in ("function_calling", "json_schema", "json_mode"):
+    for method in ("json_mode", "function_calling", "json_schema"):
         try:
             return model.with_structured_output(schema, method=method).invoke(messages)
         except Exception as exc:

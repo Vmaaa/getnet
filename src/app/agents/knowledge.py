@@ -47,16 +47,29 @@ def needs_web_search(message: str, passages: list[Passage]) -> bool:
 def web_results(message: str) -> list[Passage]:
     from ddgs import DDGS
 
-    try:
-        results = DDGS().text(message, region="us-en", max_results=5)
-    except Exception as exc:
-        logger.warning("web search failed error=%s", exc)
-        return []
-    return [
-        Passage(text=r["body"], url=r["href"], title=r["title"], score=0.5)
-        for r in results
-        if r.get("body") and r.get("href")
+    simplified = " ".join(
+        w for w in message.replace("?", "").split() if len(w) > 3
+    )[:60]
+    attempts = [
+        (message, "us-en"),
+        (simplified, "us-en"),
+        (simplified, "br-pt"),
     ]
+    for query, region in attempts:
+        try:
+            results = DDGS().text(query, region=region, max_results=5)
+        except Exception as exc:
+            logger.warning("web search failed query=%r error=%s", query[:60], exc)
+            continue
+        passages = [
+            Passage(text=r["body"], url=r["href"], title=r["title"], score=0.5)
+            for r in results
+            if r.get("body") and r.get("href")
+        ]
+        if passages:
+            return passages
+    logger.warning("web search returned no results for %r", message[:60])
+    return []
 
 
 def format_context(passages: list[Passage]) -> str:
