@@ -4,13 +4,21 @@ from typing import Literal
 
 from langgraph.graph import END, START, StateGraph
 
+from app.agents.knowledge import KnowledgeAgent
 from app.agents.router import RouterAgent
+from app.agents.support import SupportAgent
 from app.contracts import AgentResult
 from app.graph.state import FinalResponse, GraphState, TraceEntry
 
 logger = logging.getLogger(__name__)
 
 MAX_PASSES = 2
+
+
+def build_orchestrator() -> Orchestrator:
+    knowledge = KnowledgeAgent()
+    support = SupportAgent()
+    return Orchestrator(RouterAgent(knowledge, support))
 
 TRIAGE_ANSWER = (
     "I could not resolve this request with the information available. "

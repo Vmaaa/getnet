@@ -4,24 +4,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from app.agents.knowledge import KnowledgeAgent
-from app.agents.router import RouterAgent
-from app.agents.support import SupportAgent
 from app.api.schemas import ChatRequest
 from app.config import get_settings
-from app.graph.builder import Orchestrator
+from app.graph.builder import Orchestrator, build_orchestrator
 from app.graph.state import FinalResponse
 from app.logging import configure_logging
 from app.rag.embedder import get_embedder
 from app.rag.store import get_collection
 
 logger = logging.getLogger(__name__)
-
-
-def build_orchestrator() -> Orchestrator:
-    knowledge = KnowledgeAgent()
-    support = SupportAgent()
-    return Orchestrator(RouterAgent(knowledge, support))
 
 
 @asynccontextmanager
