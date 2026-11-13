@@ -12,3 +12,4 @@ build/
 data/
 .env
 ingest.log
+build.log
