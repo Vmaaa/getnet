@@ -11,4 +11,9 @@ Rules:
 USER_TEMPLATE = """Question: {question}
 
 Context passages:
-{context}"""
+{context}
+
+Respond ONLY with a JSON object with these keys:
+- "status": "answered" if the passages contain enough information, otherwise "needs_help"
+- "answer": your final cited answer as a string (empty string when needs_help)
+- "gap": one sentence describing the missing information when needs_help, otherwise null"""

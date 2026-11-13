@@ -66,7 +66,8 @@ class RouterAgent:
         return self._chat_model if self._chat_model is not None else get_chat_model()
 
     def classify(self, message: str, gap: str | None = None) -> tuple[Literal["knowledge", "support"], str]:
-        user_content = message if not gap else f"{message}\n\nPrevious attempt failed with this gap: {gap}. Take the gap into account."
+        base = f"{message}\n\nRespond ONLY with a JSON object with keys: \"intent\" (\"knowledge\" or \"support\") and \"reasoning\" (one short sentence)."
+        user_content = base if not gap else f"{base}\n\nPrevious attempt failed with this gap: {gap}. Take the gap into account."
         try:
             decision = structured_output(
                 self._model(),
