@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import AnyMessage
 
 from app.config import get_settings
 
@@ -29,3 +30,13 @@ def get_chat_model() -> BaseChatModel:
             model_provider=settings.llm_provider,
             temperature=0,
         )
+
+
+def structured_output(model: BaseChatModel, schema, messages: list[AnyMessage] | list[dict]):
+    last_error: Exception | None = None
+    for method in ("function_calling", "json_schema", "json_mode"):
+        try:
+            return model.with_structured_output(schema, method=method).invoke(messages)
+        except Exception as exc:
+            last_error = exc
+    raise last_error

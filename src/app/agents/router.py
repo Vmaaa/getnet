@@ -7,7 +7,7 @@ from app.agents.knowledge import KnowledgeAgent
 from app.agents.prompts.router import CLASSIFIER_SYSTEM
 from app.agents.support import SupportAgent
 from app.contracts import AgentResult
-from app.llm import get_chat_model
+from app.llm import get_chat_model, structured_output
 
 logger = logging.getLogger(__name__)
 
@@ -68,15 +68,13 @@ class RouterAgent:
     def classify(self, message: str, gap: str | None = None) -> tuple[Literal["knowledge", "support"], str]:
         user_content = message if not gap else f"{message}\n\nPrevious attempt failed with this gap: {gap}. Take the gap into account."
         try:
-            decision = (
-                self._model()
-                .with_structured_output(IntentDecision)
-                .invoke(
-                    [
-                        {"role": "system", "content": CLASSIFIER_SYSTEM},
-                        {"role": "user", "content": user_content},
-                    ]
-                )
+            decision = structured_output(
+                self._model(),
+                IntentDecision,
+                [
+                    {"role": "system", "content": CLASSIFIER_SYSTEM},
+                    {"role": "user", "content": user_content},
+                ],
             )
             if decision is not None and decision.intent in ("knowledge", "support"):
                 return decision.intent, decision.reasoning

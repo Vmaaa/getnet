@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from app.agents.prompts.knowledge import SYSTEM_PROMPT, USER_TEMPLATE
 from app.config import get_settings
 from app.contracts import AgentResult, Citation, Passage
-from app.llm import get_chat_model
+from app.llm import get_chat_model, structured_output
 from app.rag.retriever import retrieve
 
 logger = logging.getLogger(__name__)
@@ -82,15 +82,13 @@ class KnowledgeAgent:
                 status="needs_help",
                 gap="no information could be retrieved for this question",
             )
-        decision = (
-            self._model()
-            .with_structured_output(KnowledgeDecision)
-            .invoke(
-                [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": USER_TEMPLATE.format(question=message, context=format_context(passages))},
-                ]
-            )
+        decision = structured_output(
+            self._model(),
+            KnowledgeDecision,
+            [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": USER_TEMPLATE.format(question=message, context=format_context(passages))},
+            ],
         )
         if decision is None:
             return AgentResult(
